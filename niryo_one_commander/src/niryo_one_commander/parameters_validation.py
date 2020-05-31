@@ -19,8 +19,8 @@
 
 
 
-import rospy 
-from math import sqrt 
+import rospy
+from math import sqrt, pi
 from niryo_one_commander.robot_commander_exception import RobotCommanderException
 from niryo_one_commander.command_status import CommandStatus
 
@@ -99,8 +99,14 @@ class ParametersValidation():
     def validate_shift_pose(self, shift):
         if (shift.axis_number not in [0,1,2,3,4,5]):
             raise RobotCommanderException(CommandStatus.INVALID_PARAMETERS, "shift axis number not in [0,1,2,3,4,5]")
-        if (shift.value == 0 or shift.value < -1.0 or shift.value > 1.0):
-            raise RobotCommanderException(CommandStatus.INVALID_PARAMETERS, "shift value can't be null and < -1 or > 1")
+        if (not shift.value):
+            raise RobotCommanderException(CommandStatus.INVALID_PARAMETERS, "shift value can't be 0 or null")
+        # Cartesian shifts can't be < -1 or > 1
+        if (shift.axis_number in [0,1,2] and (shift.value < -1.0 or shift.value > 1.0)):
+            raise RobotCommanderException(CommandStatus.INVALID_PARAMETERS, "shift value can't be < -1 or > 1")
+        # Rotations can't exceed a half turn
+        if (shift.axis_number in [3,4,5] and (shift.value < -pi or shift.value > pi)):
+            raise RobotCommanderException(CommandStatus.INVALID_PARAMETERS, "shift value can't be < -π or > π")
 
     def validate_tool_command(self, cmd):
         # for now, validation in ToolsController
